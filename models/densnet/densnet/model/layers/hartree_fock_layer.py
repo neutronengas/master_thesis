@@ -20,7 +20,7 @@ class HartreeFockLayer(layers.Layer):
     
     def hartree_fock_tensor_call(self, R_tensor, coords):
         n = len(R_tensor)
-        return np.array([self.hartree_fock_call(R_tensor[i], coords) for i in range(n)])
+        return np.array([self.hartree_fock_call(R_tensor[i], coords) for i in range(n)]).astype(np.float32)
 
 
     def call(self, inputs):

@@ -11,8 +11,8 @@ class CustomDenseLayer(layers.Layer):
         self.ao_vals = ao_vals
         
     def build(self, shape):
-        self.weight = self.add_weight("weight", shape=(self.ao_vals, self.ao_vals))
-        self.bias = self.add_weight("bias", shape=(self.ao_vals,))
+        self.weight = self.add_weight("weight", shape=(self.ao_vals, self.ao_vals), trainable=True)
+        self.bias = self.add_weight("bias", shape=(self.ao_vals,), trainable=True)
 
     def call(self, input):
         out = tf.einsum("nga,ma->ngm", input, self.weight)
