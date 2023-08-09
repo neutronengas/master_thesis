@@ -9,7 +9,7 @@ num_grid_points: 900
 num_train: 40
 num_valid: 20
 data_seed: 42
-dataset: "/Users/benni/Documents/MA/models/densnet/data/md_h2.npz"
+dataset: "data/md_h2.npz"
 logdir: "./logging"
 
 num_steps: 10000
