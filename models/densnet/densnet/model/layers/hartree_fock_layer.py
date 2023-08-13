@@ -18,9 +18,15 @@ class HartreeFockLayer(layers.Layer):
         # shape of ao_vals: (n_coords, n_aovals)
         return ao_vals
     
+    def hartree_fock_call_alternative(self, R, coords):
+        # implement rough initialization with GTO value estimate
+        n_coords = len(coords)
+        n_aovals = 10
+        return np.random.random((n_coords, n_aovals))
+    
     def hartree_fock_tensor_call(self, R_tensor, coords):
         n = len(R_tensor)
-        return np.array([self.hartree_fock_call(R_tensor[i], coords) for i in range(n)]).astype(np.float32)
+        return np.array([self.hartree_fock_call_alternative(R_tensor[i], coords) for i in range(n)]).astype(np.float32)
 
 
     def call(self, inputs):

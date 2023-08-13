@@ -27,7 +27,7 @@ class DataProvider:
         self.dtypes_input["densities"] = tf.float32
         self.dtypes_input["neighbour_coords_idx"] = tf.float32
         #self.dtypes_input["corrs"] = tf.int32
-        self.dtypes_input["coords"] = tf.int32
+        self.dtypes_input["coords"] = tf.float32
         self.dtype_target = tf.float32
 
 

@@ -4,14 +4,12 @@ from tensorflow.keras import layers
 from .custom_dense_layer import CustomDenseLayer
 
 class InteractionBlock(layers.Layer):
-    def __init__(self, ao_vals, activation=None, name='interaction', **kwargs):
+    def __init__(self, num_grid_points, activation=None, name='interaction', **kwargs):
         super().__init__(name=name, **kwargs)
-        self.ao_vals = ao_vals
-
-        
-        self.dense_1 = CustomDenseLayer(self.ao_vals, activation)
-        self.dense_2 = CustomDenseLayer(self.ao_vals, activation)
-        self.dense_3 = CustomDenseLayer(self.ao_vals, activation)
+        self.num_grid_points = num_grid_points
+        self.dense_1 = CustomDenseLayer(self.num_grid_points, activation)
+        self.dense_2 = CustomDenseLayer(self.num_grid_points, activation)
+        self.dense_3 = CustomDenseLayer(self.num_grid_points, activation)
 
 
     def call(self, inputs):

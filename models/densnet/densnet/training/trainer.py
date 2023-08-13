@@ -89,9 +89,11 @@ class Trainer:
         inputs, targets = next(dataset_iter)
         preds = self.model(inputs, training=False)
 
-        mae = tf.reduce_mean(tf.abs(targets - preds), axis=0)
+        mae = tf.reduce_mean(tf.abs(targets - preds), axis=None)
+        mae = tf.reshape(mae, (1,))
         mean_mae = tf.reduce_mean(mae)
         loss = mean_mae
+        
         nsamples = tf.shape(preds)[0]
         metrics.update_state(loss, mean_mae, mae, nsamples)
 
