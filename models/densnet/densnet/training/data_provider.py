@@ -25,19 +25,19 @@ class DataProvider:
         self.dtypes_input = OrderedDict()
         self.dtypes_input["R"] = tf.float32
         self.dtypes_input["densities"] = tf.float32
-        self.dtypes_input["neighbour_coords_idx"] = tf.int32
+        self.dtypes_input["neighbour_coords_idx"] = tf.float32
         #self.dtypes_input["corrs"] = tf.int32
-        self.dtypes_input["coords"] = tf.int32
+        self.dtypes_input["coords"] = tf.float32
         self.dtype_target = tf.float32
 
 
         self.shapes_input = {}
         self.shapes_input["R"] = [None, 2, 3]
-        self.shapes_input["densities"] = [None, 900]
-        self.shapes_input["neighbour_coords_idx"] = [None, 900, 900]
+        self.shapes_input["densities"] = [None, 166]
+        self.shapes_input["neighbour_coords_idx"] = [None, 166, 166]
         #self.shapes_input["corrs"] = [None, 900 * 900]
-        self.shapes_input["coords"] = [None, 900, 3]
-        self.shape_target = [None, 900]
+        self.shapes_input["coords"] = [None, 166, 3]
+        self.shape_target = [None, 166, 166]
 
     def shuffle_train(self):
         # Shuffle the training data
@@ -71,13 +71,13 @@ class DataProvider:
             inputs_targets = []
             for key, dtype in self.dtypes_input.items():
                 inputs_targets.append(tf.constant(batch[key], dtype=dtype))
-            inputs_targets.append(tf.constant(batch["targets"]))
+            inputs_targets.append(tf.constant(batch["target"]))
             return inputs_targets
         else:
             inputs = {}
             for key, dtype in self.dtypes_input.items():
                 inputs[key] = tf.constant(batch[key], dtype=dtype)
-            targets = tf.constant(batch['targets'], dtype=tf.float32)
+            targets = tf.constant(batch['target'], dtype=tf.float32)
             return (inputs, targets)
 
     def get_dataset(self, split):

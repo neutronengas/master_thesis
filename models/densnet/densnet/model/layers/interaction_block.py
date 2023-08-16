@@ -4,26 +4,19 @@ from tensorflow.keras import layers
 from .custom_dense_layer import CustomDenseLayer
 
 class InteractionBlock(layers.Layer):
-    def __init__(self, ao_vals, activation=None, name='interaction', **kwargs):
+    def __init__(self, num_grid_points, activation=None, name='interaction', **kwargs):
         super().__init__(name=name, **kwargs)
-        self.ao_vals = ao_vals
-
-        
-        self.dense_1 = CustomDenseLayer(self.ao_vals, activation)
-        self.dense_2 = CustomDenseLayer(self.ao_vals, activation)
-        self.dense_3 = CustomDenseLayer(self.ao_vals, activation)
+        self.num_grid_points = num_grid_points
+        self.dense_1 = CustomDenseLayer(self.num_grid_points, activation)
+        self.dense_2 = CustomDenseLayer(self.num_grid_points, activation)
+        self.dense_3 = CustomDenseLayer(self.num_grid_points, activation)
 
 
     def call(self, inputs):
-        out, coords_neighbors_idx, n_batch, n_grid, n_ao = inputs
-        #out_transformed = self.dense_1(out)
-        out_transformed = out
-        n_batch, n_grid, n_ao = out_transformed.shape
-        out_dummy = np.zeros(shape=(n_batch, n_grid + 1, n_ao))
-        out_dummy[:, :n_grid, :] = out_transformed
-        messages = tf.gather(out_dummy, coords_neighbors_idx)
-        messages = tf.reduce_sum(messages, axis=-2)
-        messages = self.dense_2(messages)
-        out = out_transformed + messages
-        out = self.dense_3(out)
-        return out
+        out, coords_neighbors_idx = inputs
+        out = self.dense_1(out)
+        # messages = tf.einsum("njk,ij->nik", out, coords_neighbors_idx)
+        # messages = self.dense_2(messages)
+        # out = out + messages
+        # out = self.dense_3(out)
+        return out, coords_neighbors_idx
