@@ -23,21 +23,19 @@ class DataProvider:
         self.idx_in_epoch = {"train": 0, "val": 0, "test": 0}
 
         self.dtypes_input = OrderedDict()
-        self.dtypes_input["R"] = tf.float32
         self.dtypes_input["densities"] = tf.float32
         self.dtypes_input["corrs"] = tf.float32
         self.dtypes_input["coords"] = tf.float32
-        self.dtypes_input["N_coords"] = tf.int32
+        self.dtypes_input["adj_matrix"] = tf.float32
         self.dtype_target = tf.float32
 
 
         self.shapes_input = {}
-        self.shapes_input["R"] = [None, 2, 3]
-        self.shapes_input["densities"] = [None]
-        self.shapes_input["corrs"] = [None]
-        self.shapes_input["coords"] = [None, 3]
-        self.shapes_input["N_coords"] = [None]
-        self.shape_target = [None]
+        self.shapes_input["densities"] = [None, 166]
+        self.shapes_input["corrs"] = [None, 166, 166]
+        self.shapes_input["coords"] = [None, 166, 3]
+        self.shapes_input["adj_matrix"] = [None, 166, 166]
+        self.shape_target = [None, 166, 166]
 
     def shuffle_train(self):
         # Shuffle the training data

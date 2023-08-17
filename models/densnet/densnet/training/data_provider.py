@@ -33,11 +33,19 @@ class DataProvider:
 
         self.shapes_input = {}
         self.shapes_input["R"] = [None, 2, 3]
+<<<<<<< HEAD
         self.shapes_input["densities"] = [None, 900]
         self.shapes_input["neighbour_coords_idx"] = [900, 900]
         #self.shapes_input["corrs"] = [None, 900 * 900]
         self.shapes_input["coords"] = [900, 3]
         self.shape_target = [None, 900]
+=======
+        self.shapes_input["densities"] = [None, 166]
+        self.shapes_input["neighbour_coords_idx"] = [None, 166, 166]
+        #self.shapes_input["corrs"] = [None, 900 * 900]
+        self.shapes_input["coords"] = [None, 166, 3]
+        self.shape_target = [None, 166, 166]
+>>>>>>> 831d0c619707492c0a2be710472ec2bb46c5134f
 
     def shuffle_train(self):
         # Shuffle the training data

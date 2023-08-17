@@ -14,10 +14,13 @@ class DataContainer:
     def __init__(self, filename, target, cutoff):
         self.cutoff = cutoff
         data_dict = np.load(filename, allow_pickle=True)
-        for key in ["R", "densities", "coords", "N_coords", "corrs"]:
+
+        for key in ["R", "densities", "coords", "corrs"]:
             setattr(self, key, np.array(data_dict[key]))
         self.idx = np.arange(len(self.R))
-        self.N_coords_idx = np.concatenate([[0], np.cumsum(self.N_coords)])
+        #self.N_coords_idx = np.concatenate([[0], np.cumsum(self.N_coords)])
+
+        #self.N_corrs_idx = np.concatenate([[0], np.cumsum(self.N_coords ** 2)])
         
 
         self.target = data_dict[target[0]]
@@ -30,32 +33,35 @@ class DataContainer:
         if type(idx) is int or type(idx) is np.int64:
             idx = [idx]
         data = {}
-        data["id"] = self.id[idx]
-        data["R"] = self.R[idx]
+        data["id"] = self.idx[idx]
         data["densities"] = self.densities[idx]
         #data["coords"] = np.zeros((np.sum(self.N_coords), 3), dtype=np.float32)
-        adj_matrices = []
+        # adj_matrices = []
         
-        coords = []
-        densities = []
-        corrs = []
+        # coords = []
+        # densities = []
+        # corrs = []
 
-        for id in self.idx:
-            n_coords = self.N_coords[id]
-            n_start = self.N_coords_idx[id]
-            n_end = n_start + n_coords
+        # for id in self.idx:
+        #     n_coords = self.N_coords[id]            
+        #     n_coords_start = self.N_coords_idx[id]
+        #     n_coords_end = n_coords_start + n_coords
+            
+        #     n_corrs = n_coords ** 2
+        #     n_corrs_start = self.N_corrs_idx[id]
+        #     n_corrs_end = n_corrs_start + n_corrs
 
-            coords += self.coords[n_start:n_end]
-            densities += self.densities[n_start:n_end]
-            corrs += self.corrs[n_start:n_end]
+        #     coords += self.coords[n_coords_start:n_coords_end]
+        #     densities += self.densities[n_coords_start:n_coords_end]
+        #     corrs += self.corrs[n_corrs_start:n_corrs_end]
 
-            adj_matrix = np.linalg.norm((coords[None, :, :] - coords[:, None, :]), axis=-1)
-            adj_matrices.append(adj_matrix <= self.cutoff)
+        #     adj_matrix = np.linalg.norm((coords[None, :, :] - coords[:, None, :]), axis=-1)
+        #     adj_matrices.append(adj_matrix <= self.cutoff)
+        # total_adj_matrix = block_diag(*adj_matrices)
 
-        data["coords"] = np.array(coords)
-        data["densities"] = np.array(densities)
-        total_adj_matrix = block_diag(*adj_matrices)
-        data["adj_matrix"] = total_adj_matrix
+        data["coords"] = self.coords[idx]
+        data["corrs"] = self.corrs[idx]
+        data["adj_matrix"] = np.linalg.norm((self.coords[idx][:, None, :, :] - self.coords[idx][:, :, None, :]), axis=-1)
         # hard-coded
-        data["target"] = corrs
+        data["target"] = self.corrs[idx]
         return data

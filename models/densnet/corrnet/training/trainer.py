@@ -88,7 +88,8 @@ class Trainer:
     def predict_on_batch(self, dataset_iter, metrics):
         inputs, targets = next(dataset_iter)
         preds = self.model(inputs, training=False)
-
+        tf.print(targets[2])
+        tf.print(preds[2])
         mae = tf.reduce_mean(tf.abs(targets - preds), axis=None)
         mae = tf.reshape(mae, (1,))
         mean_mae = tf.reduce_mean(mae)
