@@ -30,10 +30,10 @@ class DataProvider:
 
 
         self.shapes_input = {}
-        self.shapes_input["densities"] = [None, 200]
+        self.shapes_input["densities"] = [None, 5, 5, 1]
 #        self.shapes_input["corrs"] = [None, 8, 5, 5, 5, 5]
 #        self.shapes_input["coords"] = [None, 200, 3]
-        self.shape_target = [None, 8, 5, 5]
+        self.shape_target = [None, 5, 5, 1]
 
     def shuffle_train(self):
         # Shuffle the training data

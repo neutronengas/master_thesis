@@ -4,8 +4,7 @@ from scipy.linalg import block_diag
 
     
 class DataContainer:
-    def __init__(self, filename, width_ticks, length_ticks, local_square_size, target, cutoff):
-        self.cutoff = cutoff
+    def __init__(self, filename, target):
         data_dict = np.load(filename, allow_pickle=True)
         for key in ["densities", "coords", "corrs"]:
             setattr(self, key, np.array(data_dict[key]))
@@ -21,7 +20,8 @@ class DataContainer:
         new_target_shape = (sample_dim * square_dim,) + tuple(self.target.shape[2:])
         self.target = self.target.reshape(new_target_shape)
         new_densities_shape = (sample_dim * square_dim,) + tuple(self.densities.shape[2:])
-        self.densities = self.densities.reshape(new_densities_shape)
+        self.densities = self.densities.reshape(new_densities_shape)[:, :, :, np.newaxis]
+        print(self.densities.shape)
         # r1 in rho(r1, r2) is always chosen to be the center of the square
         self.target = self.target[:, 3, 3, :, :] 
 
@@ -30,7 +30,7 @@ class DataContainer:
 
 
     def __len__(self):
-        return self.R.shape[0]
+        return self.densities.shape[0]
     
     def __getitem__(self, idx):
         if type(idx) is int or type(idx) is np.int64:
