@@ -11,9 +11,9 @@ class EmbeddingBlock(layers.Layer):
         self.emb_size = emb_size
         self.weight_init = tf.keras.initializers.GlorotUniform()
 
-        # base function embedding when working in the ccpvdz basis. We have atoms H - Ne with 5 basis functions for each of H and He and 14 for each of the other atoms, giving a total of 122 basis functions
+        # for now 14 different atoms are assumed
         emb_init = tf.initializers.RandomUniform(minval=-np.sqrt(3), maxval=np.sqrt(3))
-        self.embeddings = self.add_weight(name="embeddings", shape=(122, self.emb_size),
+        self.embeddings = self.add_weight(name="embeddings", shape=(14, self.emb_size),
                                           dtype=tf.float32, initializer=emb_init, trainable=True)
         
         self.dense_rdm = layers.Dense(self.emb_size, activation=activation, use_bias=True, kernel_initializer=self.weight_init)
@@ -21,6 +21,7 @@ class EmbeddingBlock(layers.Layer):
 
 
     def call(self, inputs):
-        bf_idx = inputs
-        h = tf.gather(self.embeddings, bf_idx)
-        return h
+        Z = inputs
+        # out: (None, self.embeddings)
+        out = tf.gather(self.embeddings, Z)
+        return out

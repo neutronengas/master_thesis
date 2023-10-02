@@ -1,7 +1,6 @@
 import tensorflow as tf
 from tensorflow.keras.layers import Dense, Conv2D, MaxPooling2D, UpSampling2D, Flatten, Reshape
 
-from .layers.hartree_fock_layer import HartreeFockLayer
 from .layers.interaction_block import InteractionBlock
 from .layers.output_block import OutputBlock
 from .activations import swish

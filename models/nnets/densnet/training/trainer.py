@@ -58,7 +58,8 @@ class Trainer:
         inputs, targets = next(dataset_iter)
         with tf.GradientTape() as tape:
             preds = self.model(inputs, training=True)
-            print(preds)
+            print("preds", preds.shape)
+            print("targets", targets.shape)
             mae = tf.reduce_mean(tf.abs(targets - preds), axis=None)
             mae = tf.reshape(mae, (1,))
             mean_mae = tf.reduce_mean(mae)

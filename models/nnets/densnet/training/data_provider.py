@@ -23,29 +23,27 @@ class DataProvider:
         self.idx_in_epoch = {"train": 0, "val": 0, "test": 0}
 
         self.dtypes_input = OrderedDict()
+        self.dtypes_input["Z"] = tf.int32
+        self.dtypes_input["N"] = tf.int32
         self.dtypes_input["R"] = tf.float32
-        self.dtypes_input["densities"] = tf.float32
-        self.dtypes_input["neighbour_coords_idx"] = tf.float32
+        #self.dtypes_input["densities"] = tf.float32
+        self.dtypes_input["edge_id_i"] = tf.int32
+        self.dtypes_input["edge_id_j"] = tf.int32
         #self.dtypes_input["corrs"] = tf.int32
         self.dtypes_input["coords"] = tf.float32
         self.dtype_target = tf.float32
 
 
         self.shapes_input = {}
-        self.shapes_input["R"] = [None, 2, 3]
-<<<<<<< HEAD
-        self.shapes_input["densities"] = [None, 900]
-        self.shapes_input["neighbour_coords_idx"] = [900, 900]
+        self.shapes_input["Z"] = [None]
+        self.shapes_input["N"] = [None]
+        self.shapes_input["R"] = [None, 3]
+        #self.shapes_input["densities"] = [None, 200]
+        self.shapes_input["edge_id_i"] = [None]
+        self.shapes_input["edge_id_j"] = [None]
         #self.shapes_input["corrs"] = [None, 900 * 900]
-        self.shapes_input["coords"] = [900, 3]
-        self.shape_target = [None, 900]
-=======
-        self.shapes_input["densities"] = [None, 166]
-        self.shapes_input["neighbour_coords_idx"] = [None, 166, 166]
-        #self.shapes_input["corrs"] = [None, 900 * 900]
-        self.shapes_input["coords"] = [None, 166, 3]
-        self.shape_target = [None, 166, 166]
->>>>>>> 831d0c619707492c0a2be710472ec2bb46c5134f
+        self.shapes_input["coords"] = [None, 200, 3]
+        self.shape_target = [None, 200]
 
     def shuffle_train(self):
         # Shuffle the training data

@@ -7,7 +7,7 @@ class ConvNet(tf.keras.Model):
     def __init__(self, activation=swish, output_init='zeros', name='convnet', **kwargs):
         super().__init__(name=name, **kwargs)
         self.conv2d_layers = []
-        for _ in range(3):
+        for _ in range(20):
             self.conv2d_layers.append(Conv2D(1, 3, activation='relu', padding='same', input_shape=(None, 5, 5, 1)))
 
 
