@@ -20,6 +20,8 @@ class OutputBlock(layers.Layer):
         # out: (None, self.emb_size); Z: (None,); R: (None, 3); coords: (None, self.num_grid_points, 3), N: (None,)
         out, Z, R, coords, N = inputs
         n_mol = tf.shape(N)[0]
+        mol_ids = tf.repeat(tf.range(n_mol), N)
+        N_electrons = tf.math.unsorted_segment_sum(Z, mol_ids, n_mol)[:, None]
         # recreate grid points for each atom of the molecule separately
         coords = tf.repeat(coords, N, axis=0)
         # recreate atomic positions for each point on the grid
@@ -41,21 +43,22 @@ class OutputBlock(layers.Layer):
         # calculate the norm of the s-type orbitals 
         s_type_out = s_type_cs[:, :, None] * tf.exp(-1 * s_type_alphas[:, :, None] * (tf.math.reduce_sum((R[:, None, :] - coords) ** 2, axis=-1))[:, None, :])
         s_type_out = tf.math.reduce_sum(s_type_out, axis=1)
-        # create the contribution from the p_type orbitals
+        s_type_out = tf.math.unsorted_segment_sum(s_type_out, mol_ids, n_mol)
+        # create the contribution from the p-type orbitals
         v_coeffs = self.reshape(v_coeffs)
-        p_type_out = p_type_cs[:, :, None] * tf.exp(-1 * p_type_alphas[:, :, None] * (tf.math.reduce_sum((R[:, None, :] - coords) ** 2, axis=-1))[:, None, :])
-        test = tf.math.reduce_sum((v_coeffs[:, :, None, : ] * (R[:, None, :] - coords)[:, None, :, :])**2, axis=-1)
-        p_type_out = p_type_out * test
+        p_type_out = p_type_cs[:, :, None] * tf.exp(-1 * p_type_alphas[:, :, None] * (tf.math.reduce_sum((R[:, None, :] - coords), axis=-1))[:, None, :])
+        #test = tf.math.reduce_sum((v_coeffs[:, :, None, : ] * tf.math.abs((R[:, None, :] - coords)[:, None, :, :])), axis=-1)
+        #test = tf.math.reduce_sum((tf.constant([0., 0., 1.]) * tf.math.abs((R[:, None, :] - coords)[:, None, :, :])), axis=-1)
+        #p_type_out = p_type_out * test
         p_type_out = tf.math.reduce_sum(p_type_out, axis=1)
+        p_type_out = tf.math.unsorted_segment_sum(p_type_out, mol_ids, n_mol)
         # normalizing 
-        mol_ids = tf.repeat(tf.range(n_mol), N)
-        N_electrons = tf.math.unsorted_segment_sum(Z, mol_ids, n_mol)
         s_type_norms = tf.math.unsorted_segment_sum(s_type_integrals, mol_ids, n_mol)
-        s_type_norms = tf.repeat(s_type_norms, N, axis=0)
-        s_type_norms = tf.math.reduce_sum(s_type_norms, axis=-1)
+        s_type_norms = tf.math.reduce_sum(s_type_norms, axis=-1)[:, None]
         p_type_norms = tf.math.unsorted_segment_sum(p_type_integrals, mol_ids, n_mol)
-        p_type_norms = tf.repeat(p_type_norms, N, axis=0)
         p_type_norms = tf.math.reduce_sum(p_type_norms, axis=-1)
-        dens_out = (s_type_out + p_type_out) / (s_type_norms + p_type_norms) * tf.cast(N_electrons, dtype=tf.float32)
-        dens_out = tf.math.unsorted_segment_sum(dens_out, mol_ids, n_mol)
+        norms_sum = (s_type_norms + p_type_norms)[:, None]
+        #dens_out = (s_type_out + p_type_out) / (s_type_norms + p_type_norms) * tf.cast(N_electrons, dtype=tf.float32)
+        #dens_out = (s_type_out + p_type_out) #/ norms_sum * N_electrons
+        dens_out = s_type_out #/ s_type_norms
         return dens_out
