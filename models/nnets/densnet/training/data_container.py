@@ -14,7 +14,7 @@ class DataContainer:
         self.R = self.R.reshape((-1, self.R.shape[-1]))
         self.N_cumsum = np.concatenate([[0], np.cumsum(self.N)])
         self.target = data_dict[target[0]]
-        # hard-coded reshaping of the densities
+        # hard-coded reshaping of the densitiesn
         self.target = self.target.reshape(1200, 8, 5 * 5)
         self.target = self.target.reshape(1200, 8 * 5 * 5)
 
