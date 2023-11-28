@@ -3,7 +3,8 @@ import numpy as np
 import tensorflow as tf
 
 class DataProvider:
-    def __init__(self, data_container, ntrain, nvalid, batch_size=1, seed=None, randomized=False):
+    def __init__(self, data_container, width_ticks, length_ticks, ntrain, nvalid, batch_size=1, seed=None, randomized=False):
+
         self.data_container = data_container
         self._ndata = len(data_container)
         self.nsamples = {"train": ntrain, "val": nvalid, "test": len(data_container) - ntrain - nvalid}
@@ -25,11 +26,15 @@ class DataProvider:
         self.dtypes_input = OrderedDict()
         self.dtypes_input["Z"] = tf.int32
         self.dtypes_input["N"] = tf.int32
+        self.dtypes_input["N_rdm"] = tf.int32
         self.dtypes_input["R"] = tf.float32
         #self.dtypes_input["densities"] = tf.float32
         self.dtypes_input["edge_id_i"] = tf.int32
         self.dtypes_input["edge_id_j"] = tf.int32
+        self.dtypes_input["atom_pair_indices"] = tf.int32
+        self.dtypes_input["atom_pair_mol_id"] = tf.int32
         #self.dtypes_input["corrs"] = tf.int32
+        self.dtypes_input["rdm"] = tf.float32
         self.dtypes_input["coords"] = tf.float32
         self.dtype_target = tf.float32
 
@@ -37,13 +42,18 @@ class DataProvider:
         self.shapes_input = {}
         self.shapes_input["Z"] = [None]
         self.shapes_input["N"] = [None]
+        self.shapes_input["N_rdm"] = [None]
         self.shapes_input["R"] = [None, 3]
         #self.shapes_input["densities"] = [None, 200]
         self.shapes_input["edge_id_i"] = [None]
         self.shapes_input["edge_id_j"] = [None]
+        self.shapes_input["atom_pair_indices"] = [None, 2]
+        self.shapes_input["atom_pair_mol_id"] = [None]
         #self.shapes_input["corrs"] = [None, 900 * 900]
-        self.shapes_input["coords"] = [None, 200, 3]
-        self.shape_target = [None, 200]
+        self.shapes_input["rdm"] = [None, 14, 14]
+        print(width_ticks * length_ticks)
+        self.shapes_input["coords"] = [None, width_ticks * length_ticks, 3]
+        self.shape_target = [None, width_ticks * length_ticks]
 
     def shuffle_train(self):
         # Shuffle the training data

@@ -1,0 +1,8 @@
+model_checkpoint_path: "ckpt-386"
+all_model_checkpoint_paths: "ckpt-384"
+all_model_checkpoint_paths: "ckpt-385"
+all_model_checkpoint_paths: "ckpt-386"
+all_model_checkpoint_timestamps: 1700822544.8873339
+all_model_checkpoint_timestamps: 1700822544.930238
+all_model_checkpoint_timestamps: 1700822544.972076
+last_preserved_timestamp: 1700822525.925248

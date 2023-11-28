@@ -1,91 +1,62 @@
 import numpy as np
 import tensorflow as tf
-import json
-import math
-from utils.extract_coeffs import extract_coeffs
-from utils.spatial_multipliers import spatial_multipliers
+from ..utils.create_orbital_values import create_orbital_values
+from datetime import datetime as dt
 
 from tensorflow.keras import layers
 
 class OutputBlock(layers.Layer):
-    def __init__(self, num_grid_points, m_max, max_no_orbitals_per_m, max_split_per_m, max_number_coeffs_per_ao, emb_size, n_coords, name='output', **kwargs):
+    def __init__(self, emb_size, name='output', **kwargs):
         super().__init__(name=name, **kwargs)
-        self.num_grid_points = num_grid_points
         self.emb_size = emb_size
-        self.m_max = m_max
-        self.max_no_orbitals_per_m = max_no_orbitals_per_m
-        self.max_split_per_m = max_split_per_m
-        self.max_number_coeffs_per_ao = max_number_coeffs_per_ao
-        self.n_coords = n_coords
 
-        # total number of orbitals per atom
-        no_orbitals_per_atom = m_max * max_no_orbitals_per_m * max_split_per_m
-
-        # create vector of elements from which later DMs are created
-        self.dense = tf.keras.layers.Dense((no_orbitals_per_atom) * (no_orbitals_per_atom - 1) / 2, activation=None)
-
+    def build(self, shape):
+        self.reduce_feature_vec_matrix = self.add_weight(name="reduce_feature_vec_matrix", shape=(14, self.emb_size,), dtype=tf.float32, trainable=True)
 
     def call(self, inputs):
-        
-        # out: (n_atom_pairs, self.emb_size); Z: (n_atoms,); R: (n_atoms, 3); coords: (n_molecule, self.num_grid_points, 3), N: (n_molecule,)
-        out, Z, R, coords, N, atom_pair_indices, atom_pair_mol_id = inputs
-        
-        # create guess for the density matrix 
-        out = self.dense(out)
-        dm_guess = self.reshape_dm(out)
+        # out: (n_atoms, self.no_orbitals_per_atom, self.emb_size); Z: (n_atoms,); R: (n_atoms, 3); coords: (n_molecule, self.num_grid_points, 3), N: (n_molecule,)
+        # atom_pair_indices: (n_pairs, 2), atom_pair_mol_id: (n_pairs,), rdm: (TODO), N_rdm: (TODO)
+        out, Z, R, coords, N, atom_pair_indices, atom_pair_mol_id, rdm, N_rdm = inputs
 
-        # partition DM values into molecules, by first creating the splitting indices
-        row_limits = tf.math.cumsum(N)
-        dm_guess = tf.RaggedTensor.from_row_limits(dm_guess, row_limits=row_limits, )
+        # reshape out to DM form
+        # after this step, out has shape (n_pairs, 2, self.no_orbitals_per_atom, self.emb_size)
+        out = tf.gather(out, atom_pair_indices)
+        
+        # multiply with step-variable to make sure the padded elements of the rdm belonging to H / He still are zero
+        step_var = tf.constant([1 for _ in range(5)] + [0 for _ in range(9)], dtype=tf.float32)
+        multiplier = tf.stack([step_var, step_var] + [tf.ones((14,)) for _ in range(12)], axis=0)
+        multiplier = tf.gather(multiplier, tf.gather(Z, atom_pair_indices))[:, :, :, None]
+        out = out * multiplier
+
+        # after this step, out has shape (n_pairs, self.no_orbitals_per_atom, self.no_orbitals_per_atom, self.emb_size) and is symmetric wrt to the to orbital dimensions)
+        #out = out[:, 0][:, None, :, :] * out[:, 1][:, :, None, :] + out[:, 0][:, None, :, :] + out[:, 1][:, :, None, :]
+        out = out[:, 0][:, None, :, :] + out[:, 1][:, :, None, :]
+
+
+        # reduce feature vector to single number
+        out = tf.einsum("nijk,ijk->nij", out, self.reduce_feature_vec_matrix[None, :, :] * self.reduce_feature_vec_matrix[:, None, :])   
 
         # number of molecules within batch
         n_mol = tf.shape(N)[0]
+
+        # create all evaluated orbitals for all the atoms
+        # orbitals: (n_atoms, n_coords, 14)
+        orbitals = tf.numpy_function(create_orbital_values, [Z, R, coords], Tout=tf.float32)
+
+        # grab the respective orbitals for each atom pair
+        orbitals = tf.gather(orbitals, atom_pair_indices)
+
+        # outer product of the orbitals of each atom pair
+        orbitals = orbitals[:, 0, :, :, None] * orbitals[:, 1, :, None]
+
+        # add correction term to the rdm
+        rdm += out
+
+        # multiply orbitals with corresponding segments of the rdm
+        rho = tf.reduce_sum(orbitals * rdm[:, None], axis=(-1, -2))
         
-        # pairwise euclidean distance between the atomic positions and coordinates of density evaluation (n_atoms, n_coords)
-        R_min_coords = tf.norm(R[:, None, :] - coords, axis=-1)
-        
-        # recreate grid points for each atom of the molecule separately
-        coords = tf.repeat(coords, N, axis=0)
-        
-        # get all contraction coefficients and exponents, without orbital-type-dependent prefactor
-        coeffs = extract_coeffs(Z)
-        
-        # get orbital-type-dependent prefactors
-        multipliers = spatial_multipliers(Z, R, coords)
-        
-        # integrate the p- and d-type orbital prefactors into the contraction coefficients by multiplying with prefactors
-        coeffs = coeffs * multipliers
-        
-        # split into contraction coefficients and exponents
-        coefficients = coeffs[:, :, None]
-        exponents = coeffs[:, :, None]
-
-        # create orbital values
-        # orbitals are of shape 
-        orbitals = coefficients * tf.math.exp(-1 * exponents * R_min_coords[:, :, None, None, None, None])
-
-        # sum over the contraction coefficients to create atomic GTOs
-        orbitals = tf.math.reduce_sum(orbitals, axis=-1)
-
-        # flatten all orbital-dimensions, s.t. the final shape is given by (n_atoms, n_coords, no_orbitals_per_atom)
-        orbitals = self.reshape_orbitals(orbitals)
-
-        # transpose n_coords and no_orbitals_per_atom to make future assignements easier 
-        # to shape (n_atoms, no_orbitals_per_atom, n_coords)
-        orbitals = tf.transpose(orbitals, (0, 2, 1))
-
-        # atom-pair indices are of shape (n_pairs, 2)
-        # atom_pairs are of shape (n_pairs, 2, no_orbitals_per_atom, n_coords)
-        atom_pairs = tf.gather(orbitals, atom_pair_indices)
-    
-        # multiply together the 2 orbitals
-        orbital_pairs_multiplied = tf.math.reduce_prod(atom_pairs, axis=1)
-
-        # multiply the orbital values with the DM values
-        orbital_pairs_multiplied = orbital_pairs_multiplied * out
-
         # sum over the atom-pairs, grouped by the molecule to which they belong
         # output shape: (n_mol, n_coords)
-        densities_molecule_wise = tf.math.unsorted_segment_sum(orbital_pairs_multiplied, atom_pair_mol_id, num_segments=n_mol)
+        densities_molecule_wise = tf.math.unsorted_segment_sum(rho, atom_pair_mol_id, num_segments=n_mol)
         
         return densities_molecule_wise

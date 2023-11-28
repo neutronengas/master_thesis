@@ -1,0 +1,32 @@
+model_name: "dmnet"
+
+emb_size: 10
+num_interaction_blocks: 3
+width_ticks: 10
+length_ticks: 20
+cutoff: 2
+m_max: 3
+max_no_orbitals_per_m: 4
+max_split_per_m: 5
+max_number_coeffs_per_ao: 12
+
+num_train: 800
+num_valid: 200
+data_seed: 42
+dataset: "../data/md_h2.npz"
+logdir: "../logging"
+
+num_steps: 10000
+ema_decay: 0.999
+
+learning_rate: 0.001
+warmup_steps: 3000
+decay_rate: 0.01
+decay_steps: 4000000
+
+batch_size: 30
+evaluation_interval: 100
+save_interval: 1
+restart: None
+comment: "final"
+target: ['densities']
