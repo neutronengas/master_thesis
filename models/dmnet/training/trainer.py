@@ -96,4 +96,4 @@ class Trainer:
         nsamples = tf.shape(preds)[0]
         metrics.update_state(loss, mean_mae, mae, nsamples)
 
-        return preds
+        return preds, inputs

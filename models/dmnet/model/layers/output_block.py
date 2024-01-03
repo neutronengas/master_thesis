@@ -16,7 +16,7 @@ class OutputBlock(layers.Layer):
     def call(self, inputs):
         # out: (n_atoms, self.no_orbitals_per_atom, self.emb_size); Z: (n_atoms,); R: (n_atoms, 3); coords: (n_molecule, self.num_grid_points, 3), N: (n_molecule,)
         # atom_pair_indices: (n_pairs, 2), atom_pair_mol_id: (n_pairs,), rdm: (TODO), N_rdm: (TODO)
-        out, Z, R, coords, N, atom_pair_indices, atom_pair_mol_id, rdm, N_rdm = inputs
+        out, Z, R, N, atom_pair_indices, atom_pair_mol_id, rdm, N_rdm = inputs
 
         # reshape out to DM form
         # after this step, out has shape (n_pairs, 2, self.no_orbitals_per_atom, self.emb_size)
@@ -41,22 +41,22 @@ class OutputBlock(layers.Layer):
 
         # create all evaluated orbitals for all the atoms
         # orbitals: (n_atoms, n_coords, 14)
-        orbitals = tf.numpy_function(create_orbital_values, [Z, R, coords], Tout=tf.float32)
+        #orbitals = tf.numpy_function(create_orbital_values, [Z, R, coords], Tout=tf.float32)
 
-        # grab the respective orbitals for each atom pair
-        orbitals = tf.gather(orbitals, atom_pair_indices)
+        ## grab the respective orbitals for each atom pair
+        #orbitals = tf.gather(orbitals, atom_pair_indices)
 
-        # outer product of the orbitals of each atom pair
-        orbitals = orbitals[:, 0, :, :, None] * orbitals[:, 1, :, None]
+        ## outer product of the orbitals of each atom pair
+        #orbitals = orbitals[:, 0, :, :, None] * orbitals[:, 1, :, None]
 
         # add correction term to the rdm
         rdm += out
 
         # multiply orbitals with corresponding segments of the rdm
-        rho = tf.reduce_sum(orbitals * rdm[:, None], axis=(-1, -2))
+        # rho = tf.reduce_sum(orbitals * rdm[:, None], axis=(-1, -2))
         
         # sum over the atom-pairs, grouped by the molecule to which they belong
         # output shape: (n_mol, n_coords)
-        densities_molecule_wise = tf.math.unsorted_segment_sum(rho, atom_pair_mol_id, num_segments=n_mol)
+        # densities_molecule_wise = tf.math.unsorted_segment_sum(rho, atom_pair_mol_id, num_segments=n_mol)
         
-        return densities_molecule_wise
+        return rdm
