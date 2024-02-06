@@ -12,11 +12,12 @@ class DataContainer:
         for key in list(data_dict.keys()):
             setattr(self, key, np.array(data_dict[key]))
         
+        # self.coords = self.predict_coords
         # filter out half of cooridnates to check effect on training time
-        #self.coords = self.coords.transpose((1, 0, 2))
-        #self.coords = self.coords.reshape((80, 80, 299, 3))
-        # self.coords = self.coords[::8, ::8]
-        # self.coords = self.coords.reshape((100, 299, 3))
+        # self.coords = self.coords.transpose((1, 0, 2))
+        # self.coords = self.coords.reshape((10, 20, 1200, 3))
+        # self.coords = self.coords[:, ::2]
+        # self.coords = self.coords.reshape((100, 1200, 3))
         # self.coords = self.coords.transpose((1, 0, 2))
       
 
@@ -32,9 +33,9 @@ class DataContainer:
         self.target = data_dict[target[0]]
 
         # self.target = self.target.transpose((1, 0))
-        # self.target = self.target.reshape((80, 80, 299))
-        # self.target = self.target[::8, ::8]
-        # self.target = self.target.reshape((100, 299))
+        # self.target = self.target.reshape((10, 20, 1200))
+        # self.target = self.target[:, ::2]
+        # self.target = self.target.reshape((100, 1200))
         # self.target = self.target.transpose((1, 0))
 
 
@@ -63,15 +64,16 @@ class DataContainer:
             idx = [idx]
         data = {}
         data["id"] = self.id[idx]
-        data["target"] = self.target[idx]
+        #data["target"] = self.target[idx]
         data["N"] = self.N[idx]
         data["N_rdm"] = self.N_rdm[idx]
 
         #data["corrs"] = self.corrs[idx]   
-        data["coords"] = np.repeat(self.coords[idx], data["N"], axis=0) # TODO
+        #data["coords"] = np.repeat(self.coords[idx], data["N"], axis=0) # TODO
         data['Z'] = np.zeros(np.sum(data['N']), dtype=np.int32)
         data['R'] = np.zeros([np.sum(data['N']), 3], dtype=np.float32)
         data['rdm'] = np.zeros((np.sum(data["N_rdm"]), 14, 14), dtype=np.float32)
+        data['target'] = np.zeros((np.sum(data["N_rdm"]), 14, 14), dtype=np.float32)
         nend = 0
         n_rdm_end = 0
         adj_matrices = []
@@ -89,8 +91,10 @@ class DataContainer:
                 Z = self.Z[self.N_cumsum[i]:self.N_cumsum[i + 1]]
                 data['Z'][nstart:nend] = Z
 
-            rdm = self.hf_rdm[self.N_rdm_cumsum[i]:self.N_rdm_cumsum[i + 1]]
-            data["rdm"][n_rdm_start:n_rdm_end] = rdm
+            hf_1rdm = self.hf_1rdms[self.N_rdm_cumsum[i]:self.N_rdm_cumsum[i + 1]]
+            mp_1rdm = self.mp_1rdms[self.N_rdm_cumsum[i]:self.N_rdm_cumsum[i + 1]]
+            data["rdm"][n_rdm_start:n_rdm_end] = hf_1rdm
+            data["target"][n_rdm_start:n_rdm_end] = mp_1rdm
 
             R = self.R[self.N_cumsum[i]:self.N_cumsum[i + 1]]
             data['R'][nstart:nend] = R

@@ -23,11 +23,12 @@ class InteractionBlock(layers.Layer):
         # out: (None, self.no_orbitals_per_atom, self.emb_size); R: (None, 3); edge_id_i: (None,), edge_id_j: (None,)
         out, R, edge_id_i, edge_id_j = inputs
         msg = tf.gather(out, edge_id_i)
+        K = tf.einsum("ij,kj->ki", tf.eye(3), R)
         msg = msg / tf.norm(tf.gather(R, edge_id_i) - tf.gather(R, edge_id_j), axis=1)[:, None, None]
         msg = self.dense_1(msg)
-        #msg = tf.einsum("ikj,nij->nik", self.transform_mat_weights, msg)
+        msg = tf.einsum("ikj,nij->nik", self.transform_mat_weights, msg)
         msg = msg + self.transform_biases
-        #msg = self.activation(msg)
+        msg = self.activation(msg)
         #print(edge_id_i.shape)
         msg = tf.math.unsorted_segment_sum(msg, edge_id_j, num_segments=len(out))
         msg = self.activation(msg)

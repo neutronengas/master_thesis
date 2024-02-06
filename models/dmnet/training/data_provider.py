@@ -35,7 +35,7 @@ class DataProvider:
         self.dtypes_input["atom_pair_mol_id"] = tf.int32
         #self.dtypes_input["corrs"] = tf.int32
         self.dtypes_input["rdm"] = tf.float32
-        self.dtypes_input["coords"] = tf.float32
+        #self.dtypes_input["coords"] = tf.float32
         self.dtype_target = tf.float32
 
 
@@ -51,8 +51,8 @@ class DataProvider:
         self.shapes_input["atom_pair_mol_id"] = [None]
         #self.shapes_input["corrs"] = [None, 900 * 900]
         self.shapes_input["rdm"] = [None, 14, 14]
-        self.shapes_input["coords"] = [None, width_ticks * length_ticks, 3]
-        self.shape_target = [None, width_ticks * length_ticks]
+        #self.shapes_input["coords"] = [None, width_ticks * length_ticks, 3]
+        self.shape_target = [None, 14, 14]
 
     def shuffle_train(self):
         # Shuffle the training data
